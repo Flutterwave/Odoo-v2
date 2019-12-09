@@ -3,11 +3,10 @@
     <data noupdate="1">
         <record id="payment_payment_acquirer_rave" model="payment.acquirer">
             <field name="name">Rave</field>
-            <field name="image" type="base64" file="payment_rave/static/src/img/flutterwave.png"/>
+            <field name="image_128" type="base64" file="payment_rave/static/src/img/flutterwave.png"/>
             <field name="provider">rave</field>
             <field name="company_id" ref="base.main_company"/>
             <field name="view_template_id" ref="rave_form"/>
-            <!-- <field name="registration_view_template_id" ref="stripe_s2s_form"/> -->
             <field name="environment">test</field>
             <field name="pre_msg"><![CDATA[
                 <p>You will be prompted with Rave Payment page for payment information.</p>]]></field>

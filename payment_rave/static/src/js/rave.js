@@ -104,7 +104,7 @@ odoo.define('payment_rave.rave', function(require) {
         if(environment === "prod"){
             var url =  "https://api.ravepay.co/flwv3-pug/getpaidx/api/flwpbf-inline.js";
         }else{
-            var url =  "https://ravesandboxapi.flutterwave.com/flwv3-pug/getpaidx/api/flwpbf-inline.js";
+            var url =  "https://api.ravepay.co/flwv3-pug/getpaidx/api/flwpbf-inline.js";
         }
 
         $.getScript(url, function(data, textStatus, jqxhr) {
