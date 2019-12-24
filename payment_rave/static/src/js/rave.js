@@ -37,14 +37,12 @@ odoo.define('payment_rave.rave', function(require) {
                 }
                 if ( response.tx.chargeResponseCode == "00" || response.tx.chargeResponseCode == "0" ) {
                     // redirect to a success page
-                    ajax.jsonRpc("/payment/rave/verify_charge", 'call', {
+                    ajax.rpc("/payment/rave/verify_charge", 'call', {
                         data : response.tx,
                         tx_ref:response.tx.txRef
-                    }).done(function(data){
-                        //console.log(data);
+                    }).then(function(data){
                         window.location.href = data;
-                    }).fail(function(data){
-                        console.log("Failed to redirect!");
+                    }).catch(function(data){
                         var msg = data && data.data && data.data.message;
                         var wizard = $(qweb.render('rave.error', {'msg': msg || _t('Payment error')}));
                         wizard.appendTo($('body')).modal({'keyboard': true});
@@ -78,7 +76,7 @@ odoo.define('payment_rave.rave', function(require) {
                 return provider_form.find('input[name="' + name + '"]').val();
             }
 
-            ajax.jsonRpc("/payment/values", 'call', {
+            ajax.rpc("/payment/values", 'call', {
                 acquirer_id : parseInt(provider_form.find('#acquirer_rave').val()),
                 amount : parseFloat(get_input_value("amount") || '0.0'),
                 currency : get_input_value("currency"),
@@ -89,9 +87,9 @@ odoo.define('payment_rave.rave', function(require) {
                 phone : get_input_value("phone"),
                 return_url :   get_input_value("return_url"),
                 merchant :  get_input_value("merchant")
-            }).done(function(data){
+            }).then(function(data){
                 payWithRave(data.publicKey,data.email,data.amount,data.phone,data.currency,data.invoice_num);
-            }).fail(function(data){
+            }).catch(function(data){
                 console.log("Failed!");
                 var msg = data && data.data && data.data.message;
                 var wizard = $(qweb.render('rave.error', {'msg': msg || _t('Payment error')}));
