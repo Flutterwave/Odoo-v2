@@ -76,7 +76,7 @@ odoo.define('payment_rave.rave', function(require) {
                 return provider_form.find('input[name="' + name + '"]').val();
             }
 
-            ajax.rpc("/payment/values", 'call', {
+            ajax.jsonRpc("/payment/values", 'call', {
                 acquirer_id : parseInt(provider_form.find('#acquirer_rave').val()),
                 amount : parseFloat(get_input_value("amount") || '0.0'),
                 currency : get_input_value("currency"),
