@@ -37,7 +37,7 @@ odoo.define('payment_rave.rave', function(require) {
                 }
                 if ( response.tx.chargeResponseCode == "00" || response.tx.chargeResponseCode == "0" ) {
                     // redirect to a success page
-                    ajax.rpc("/payment/rave/verify_charge", 'call', {
+                    ajax.jsonRpc("/payment/rave/verify_charge", 'call', {
                         data : response.tx,
                         tx_ref:response.tx.txRef
                     }).then(function(data){
