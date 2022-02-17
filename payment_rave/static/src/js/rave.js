@@ -16,10 +16,11 @@ odoo.define('payment_rave.rave', function(require) {
         $.blockUI.defaults.overlayCSS["opacity"] = '0.9';
     }
 
-    function payWithRave(pubKey,email,amount,phone,currency,invoice_num) {
+    function payWithRave(pubKey,email,amount,phone,currency,invoice_num, name) {
         var x = getpaidSetup({
             PBFPubKey: pubKey,
             customer_email: email,
+            customer_firstname: name,
             amount: amount,
             customer_phone: phone,
             currency: currency,
@@ -88,7 +89,7 @@ odoo.define('payment_rave.rave', function(require) {
                 return_url :   get_input_value("return_url"),
                 merchant :  get_input_value("merchant")
             }).then(function(data){
-                payWithRave(data.publicKey,data.email,data.amount,data.phone,data.currency,data.invoice_num);
+                payWithRave(data.publicKey,data.email,data.amount,data.phone,data.currency,data.invoice_num, data.name);
             }).catch(function(data){
                 console.log("Failed!");
                 var msg = data && data.data && data.data.message;
