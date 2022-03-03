@@ -1,20 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <data noupdate="1">
-        <record id="payment_payment_acquirer_rave" model="payment.acquirer">
-            <field name="name">Rave</field>
+<odoo noupdate="1">
+        <record id="payment_acquirer_rave" model="payment.acquirer">
+            <field name="name">Flutterwave for Business</field>
             <field name="image_128" type="base64" file="payment_rave/static/src/img/flutterwave.png"/>
             <field name="provider">rave</field>
             <field name="company_id" ref="base.main_company"/>
-            <field name="view_template_id" ref="rave_form"/>
+            <field name="redirect_form_view_id" ref="rave_form"/>
             <field name="environment">test</field>
+            <field name="support_refund"></field>
+            <field name="support_tokenization"></field>
             <field name="pre_msg"><![CDATA[
-                <p>You will be prompted with Rave Payment page for payment information.</p>]]></field>
+                <p>Making payments simple.</p>]]></field>
             <field name="rave_public_key">FLWPUBK-XXXXX-XX</field>
             <field name="rave_secret_key">FLWSECK-XXXXX-XX</field>
+            <field name="rave_secret_hash">RAVE-SECRET-HASH</field>
             <field name="description" type="html">
                     <p>
-                        A payment gateway to accept online payments via Flutterwave Rave.
+                        A payment gateway to accept online payments via Flutterwave.
                     </p>
                     <p>
                          <i class="fa fa-check"/>Online Payment
@@ -26,5 +28,10 @@
                 </field>
                     
         </record>
-    </data>
+
+        <record id="payment_method_rave" model="account.payment.method">
+            <field name="name">Rave</field>
+            <field name="code">rave</field>
+            <field name="payment_type">inbound</field>
+        </record>
 </odoo>
