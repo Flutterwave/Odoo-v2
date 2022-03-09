@@ -1,1 +1,1 @@
-# Rave payment acquirer for Odoo
+# Flutterwave payment acquirer for Odoo
