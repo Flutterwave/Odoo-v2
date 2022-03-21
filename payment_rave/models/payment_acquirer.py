@@ -1,105 +1,108 @@
 # coding: utf-8
+import requests, json, logging
+from tokenize import group
+from werkzeug.urls import url_join
 
-import logging
-import requests
-import pprint
-import json
+from .currencies import SUPPORTED_CURRENCIES
 
-from odoo import api, fields, models, _
-from odoo.addons.payment.models.payment_acquirer import ValidationError
-from odoo.exceptions import UserError
-from odoo.tools.safe_eval import safe_eval
-from odoo.tools.float_utils import float_round
+from odoo import api, fields, service, models, _
+from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 
-
-
-class PaymentAcquirerStripe(models.Model):
+class PaymentAcquirer(models.Model):
     _inherit = 'payment.acquirer'
-
-    provider = fields.Selection(selection_add=[('rave', 'Rave')])
+    
+    provider = fields.Selection(
+        selection_add=[('rave', "Rave")], ondelete={'rave': 'cascade'})
+    # provider = fields.Selection(selection_add=[('flutterwave', 'Flutterwave')], ondelete={'flutterwave': 'set default'})
     rave_public_key = fields.Char(required_if_provider='rave', groups='base.group_user')
     rave_secret_key = fields.Char(required_if_provider='rave', groups='base.group_user')
+    rave_secret_hash = fields.Char(required_if_provider='rave', groups='base.group_user', string="Flutterwave Secret Hash")
     environment = fields.Char(required_if_provider='rave', groups='base.group_user')
 
     @api.model
+    def _get_compatible_acquirers(self, *args, currency_id=None, **kwargs):
+        """ Overide of payment to unlist Flutterwave acquirers if currency is not supported """
+        acquirers = super()._get_compatible_acquirers(*args, currency_id=None, **kwargs)
+        currency = self.env['res.currency'].browse(currency_id).exists()
+        if currency and currency.name not in SUPPORTED_CURRENCIES:
+            acquirers = acquirers.filtered(lambda a: a.provider != 'rave')
+        return acquirers
+
+    @api.model
     def _get_rave_api_url(self):
-        """ Rave URLs"""
-        if self.environment == 'prod':
-            return 'api.ravepay.co'
-        else :
-            return 'ravesandboxapi.flutterwave.com'
-
-    @api.multi
-    def rave_form_generate_values(self, tx_values):
         self.ensure_one()
-        rave_tx_values = dict(tx_values)
-        temp_rave_tx_values = {
-            'company': self.company_id.name,
-            'amount': tx_values['amount'],  # Mandatory
-            'currency': tx_values['currency'].name,  # Mandatory anyway
-            'currency_id': tx_values['currency'].id,  # same here
-            'address_line1': tx_values.get('partner_address'),  # Any info of the partner is not mandatory
-            'address_city': tx_values.get('partner_city'),
-            'address_country': tx_values.get('partner_country') and tx_values.get('partner_country').name or '',
-            'email': tx_values.get('partner_email'),
-            'address_zip': tx_values.get('partner_zip'),
-            'name': tx_values.get('partner_name'),
-            'phone': tx_values.get('partner_phone'),
-        }
+        """ Flutterwave URLs"""
+        return 'https://api.flutterwave.com'
 
-        rave_tx_values.update(temp_rave_tx_values)
-        return rave_tx_values
+    def _flw_make_request(self, endpoint, payload=None, method='POST', offline=False):
+        """  Make a request to Flutterwave API at the specified endpoint,
+        
+         Note: self.ensure_one()
+        :param str endpoint: The endpoint to be reached by the request
+        :param dict payload: The payload of the request
+        :param str method: The HTTP method of the request
+        :param bool offline: Whether the operation of the transaction being processed is 'offline'
+        :return The JSON-formatted content of the response
+        :rtype: dict
+        :raise: ValidationError if an HTTP error occurs
+        """
+        self.ensure_one()
 
+        url = 'https://api.flutterwave.com/v3' + endpoint
 
-class PaymentTransactionRave(models.Model):
-    _inherit = 'payment.transaction'
-
-    def _rave_verify_charge(self, data):
-        api_url_charge = 'https://%s/flwv3-pug/getpaidx/api/v2/verify' % (self.acquirer_id._get_rave_api_url())
-        payload = {
-            'SECKEY': self.acquirer_id.rave_secret_key,
-            'txref': self.reference,
-        }
+        odoo_version = service.common.exp_version()['server_version']
+        module_version = self.env.ref('base.module_payment_rave').installed_version
         headers = {
+            'Authorization': f'Bearer {self.rave_secret_key}',
             'Content-Type': 'application/json',
+            "User-Agent": f'Odoo/{odoo_version} FlutterwaveNativeOdoo/{module_version}'
         }
-        
-        _logger.info('_rave_verify_charge: Sending values to URL %s, values:\n%s', api_url_charge, pprint.pformat(payload))
-        r = requests.post(api_url_charge,headers=headers, data=json.dumps(payload))
-        # res = r.json()
-        _logger.info('_rave_verify_charge: Values received:\n%s', pprint.pformat(r))
-        return self._rave_validate_tree(r.json(),data)
+        try:
+            response = requests.request(method, url, data=json.dumps(payload), headers=headers, timeout=160)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            _logger.exception("Unable to communicate with Flutterwave: %s", url)
+            raise ValidationError("Flutterwave: " + _("Could not establish the connection to the API."))
+        return response.json()
 
-    @api.multi
-    def _rave_validate_tree(self, tree, data):
+    def _flw_get_request(self, endpoint, method='GET', offline=False):
         self.ensure_one()
-        if self.state != 'draft':
-            _logger.info('Rave: trying to validate an already validated tx (ref %s)', self.reference)
-            return True
 
-        status = tree.get('status')
-        amount = tree["data"]["amount"]
-        currency = tree["data"]["currency"]
-        
-        if status == 'success' and amount == data["amount"] and currency == data["currency"] :
-            self.write({
-                'date': fields.datetime.now(),
-                'acquirer_reference': tree["data"]["txid"],
-            })
-            self._set_transaction_done()
-            self.execute_callback()
-            if self.payment_token_id:
-                self.payment_token_id.verified = True
-            return True
-        else:
-            error = tree['message']
-            _logger.warn(error)
-            self.sudo().write({
-                'state_message': error,
-                'acquirer_reference':tree["data"]["txid"],
-                'date': fields.datetime.now(),
-            })
-            self._set_transaction_cancel()
-            return False
+        url = 'https://api.flutterwave.com/v3' + endpoint
+
+        odoo_version = service.common.exp_version()['server_version']
+        module_version = self.env.ref('base.module_payment_rave').installed_version
+        headers = {
+            'Authorization': f'Bearer {self.rave_secret_key}',
+            'Content-Type': 'application/json',
+            "User-Agent": f'Odoo/{odoo_version} FlutterwaveNativeOdoo/{module_version}'
+        }
+
+        try:
+            response = requests.request(method, url, data=None, headers=headers, timeout=60)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            _logger.exception("Unable to communicate with Flutterwave: %s", url)
+            raise ValidationError("Flutterwave: " + _("Could not establish the connection to the API."))
+        return response.json()
+
+
+    def _get_default_payment_method_id(self):
+        self.ensure_one()
+        if self.provider != 'rave':
+            return super()._get_default_payment_method_id()
+        return self.env.ref('payment_rave.payment_method_rave').id
+
+
+    def _should_build_inline_form(self, is_validation=False):
+        """ Return whether the inline form should be instantiated if it exists.
+        For an acquirer to handle both direct payments and payment with redirection, it should
+        override this method and return whether the inline form should be instantiated (i.e. if the
+        payment should be direct) based on the operation (online payment or validation).
+        :param bool is_validation: Whether the operation is a validation
+        :return: Whether the inline form should be instantiated
+        :rtype: bool
+        """
+        return False
