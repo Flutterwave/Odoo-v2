@@ -15,10 +15,10 @@ _logger = logging.getLogger(__name__)
 
 
 
-class PaymentAcquirerStripe(models.Model):
+class PaymentAcquirerRave(models.Model):
     _inherit = 'payment.acquirer'
 
-    provider = fields.Selection(selection_add=[('rave', 'Rave')])
+    provider = fields.Selection(selection_add=[('rave', 'Rave')], ondelete={'rave': 'cascade'})
     rave_public_key = fields.Char(required_if_provider='rave', groups='base.group_user')
     rave_secret_key = fields.Char(required_if_provider='rave', groups='base.group_user')
     environment = fields.Char(required_if_provider='rave', groups='base.group_user')
@@ -29,9 +29,8 @@ class PaymentAcquirerStripe(models.Model):
         if self.environment == 'prod':
             return 'api.ravepay.co'
         else :
-            return 'ravesandboxapi.flutterwave.com'
+            return 'api.ravepay.co'
 
-    @api.multi
     def rave_form_generate_values(self, tx_values):
         self.ensure_one()
         rave_tx_values = dict(tx_values)
@@ -72,7 +71,6 @@ class PaymentTransactionRave(models.Model):
         _logger.info('_rave_verify_charge: Values received:\n%s', pprint.pformat(r))
         return self._rave_validate_tree(r.json(),data)
 
-    @api.multi
     def _rave_validate_tree(self, tree, data):
         self.ensure_one()
         if self.state != 'draft':
