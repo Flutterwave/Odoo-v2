@@ -58,7 +58,7 @@ Now, let's configure the payment acquirer:
    :class: img-responsive img-thumbnail
 
 - If necessary, you may change the forced payment type (eg. *Bank Link*, *Bank
-  Transfer*, *Bitcoin* or *Credit Card*), default rave widget language
+  Transfer*, or *Credit Card*), default rave widget language
   and the market country for your eCommerce shop.
 
 - Click on the *Save* button.
