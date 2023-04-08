@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 import pprint
 import werkzeug
@@ -47,8 +48,9 @@ class RaveController(http.Controller):
         else:
             response = tx._rave_verify_charge(data)
         _logger.info('Rave: entering form_feedback with post data %s', pprint.pformat(response))
-        if response:
-            request.env['payment.transaction'].sudo().with_context(lang=None).form_feedback(response, 'rave')
+        # if response:
+            # request.env['payment.transaction'].sudo().form_feedback(response, 'rave')
         # add the payment transaction into the session to let the page /payment/process to handle it
         PaymentProcessing.add_payment_transaction(tx)
         return "/payment/process"
+        

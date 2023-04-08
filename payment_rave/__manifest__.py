@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 {
-    'name': 'Rave Payment Acquirer by Flutterwave',
+    'name': 'Flutterwave for Business',
     'category': 'eCommerce',
-    'summary': 'Payment Acquirer:Flutterwave Rave Implementation',
+    'summary': 'The Official Odoo Module for F4B Commerce',
     'version': '1',
     'license': 'AGPL-3',
     'author': 'Flutterwave Technology Solutions',
     'website': 'https://rave.flutterwave.com/',
-    'description': """Flutterwave Rave Payment Acquirer""",
+    'description': """The Official Odoo Module for F4B Commerce""",
     'depends': ['payment','website'],
     'data': [
         'views/payment_views.xml',
