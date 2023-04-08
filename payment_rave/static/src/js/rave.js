@@ -20,14 +20,22 @@ odoo.define('payment_rave.rave', function (require) {
         // console.log(transaction_data);
         const { publicKey, email, amount, phone, currency, invoice_num, name } = transaction_data;
 
+        var flwHasPaid = false;
+
         let payload = {
             public_key: publicKey,
             amount,
             currency,
             tx_ref: invoice_num,
-            onclose: function () { },
+            onclose: function () {
+                // window.location.href = '/shop/payment';
+                if(!flwHasPaid) {
+                    window.location.reload();
+                }
+            },
             callback: function (response) {
-                var txref = response.tx_ref; // collect txRef returned and pass to a 					server page to complete status check.
+                console.log("repsonse from Flutterwave: ", response);
+                const txref = response.tx_ref; // collect txRef returned and pass to a 					server page to complete status check.
                 if ($.blockUI) {
                     var msg = _t("Just one more second, confirming your payment...");
                     $.blockUI({
@@ -37,6 +45,7 @@ odoo.define('payment_rave.rave', function (require) {
                     });
                 }
                 if (response.charge_response_code == "00") {
+                    flwHasPaid = true;
                     // redirect to a success page
                     ajax.jsonRpc("/payment/rave/verify_charge", 'call', {
                         data: response,
@@ -45,6 +54,7 @@ odoo.define('payment_rave.rave', function (require) {
                         //console.log(data);
                         window.location.href = data;
                     }).catch(function (data) {
+                        console.log(data);
                         console.log("Failed to redirect!");
                         var msg = data && data.data && data.data.message;
                         var wizard = $(qweb.render('rave.error', { 'msg': msg || _t('Payment error') }));

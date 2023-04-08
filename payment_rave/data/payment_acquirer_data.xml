@@ -3,7 +3,7 @@
     <data noupdate="1">
 
         <record id="payment_acquirer_rave" model="payment.acquirer">
-            <field name="name">Rave</field>
+            <field name="name">Flutterwave</field>
             <!-- <field name="image" type="base64" file="payment_rave/static/src/img/flutterwave.png"/> -->
             <field name="provider">rave</field>
             <field name="company_id" ref="base.main_company"/>
