@@ -30,11 +30,22 @@ odoo.define('payment_rave.rave', function (require) {
             onclose: function () {
                 // window.location.href = '/shop/payment';
                 if(!flwHasPaid) {
-                    window.location.reload();
+                    $.blockUI({
+                        'message': '<h2 class="text-white"><img src="/web/static/src/img/spin.png" class="fa-pulse"/>' +
+                            '    <br />' + 'Canceling the order' +
+                            '</h2>'
+                    });
+                    
+                    ajax.jsonRpc("/payment/rave/cancel", 'call', {
+                        status: "cancelled",
+                        tx_ref: invoice_num
+                    }).then(function (data) {
+                        window.location.href = data;
+                    })
                 }
             },
             callback: function (response) {
-                console.log("repsonse from Flutterwave: ", response);
+
                 const txref = response.tx_ref; // collect txRef returned and pass to a 					server page to complete status check.
                 if ($.blockUI) {
                     var msg = _t("Just one more second, confirming your payment...");
@@ -44,6 +55,7 @@ odoo.define('payment_rave.rave', function (require) {
                             '</h2>'
                     });
                 }
+
                 if (response.charge_response_code == "00") {
                     flwHasPaid = true;
                     // redirect to a success page
@@ -51,10 +63,8 @@ odoo.define('payment_rave.rave', function (require) {
                         data: response,
                         tx_ref: response.tx_ref
                     }).then(function (data) {
-                        //console.log(data);
                         window.location.href = data;
                     }).catch(function (data) {
-                        console.log(data);
                         console.log("Failed to redirect!");
                         var msg = data && data.data && data.data.message;
                         var wizard = $(qweb.render('rave.error', { 'msg': msg || _t('Payment error') }));
@@ -82,7 +92,9 @@ odoo.define('payment_rave.rave', function (require) {
 
         var x = FlutterwaveCheckout(payload);
     }
+    
     require('web.dom_ready');
+
     if (!$('.o_payment_form').length) {
         return $.Deferred().reject("DOM doesn't contain '.o_payment_form'");
     }
