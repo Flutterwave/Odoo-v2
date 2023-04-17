@@ -105,9 +105,9 @@ class PaymentAcquirerRave(models.Model):
             raise ValidationError(
                 'webhook event received but webhook secret is not configured')
 
-        _logger.info("recieved sign:\n%s", pprint.pformat(recieved_hash))
-        _logger.info("recieved sign:\n%s",
-                     pprint.pformat(self.rave_secret_hash))
+        # _logger.info("recieved sign:\n%s", pprint.pformat(recieved_hash))
+        # _logger.info("recieved sign:\n%s",
+        #              pprint.pformat(self.rave_secret_hash))
 
         if not consteq(self.rave_secret_hash, recieved_hash):
             _logger.error(
