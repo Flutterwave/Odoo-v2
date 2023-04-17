@@ -9,6 +9,7 @@
                 <group attrs="{'invisible': [('provider', '!=', 'rave')]}">
                     <field name="rave_public_key"/>
                     <field name="rave_secret_key"/>
+                    <field name="rave_secret_hash" />
                     <field name="environment"/>
                 </group>
             </xpath>

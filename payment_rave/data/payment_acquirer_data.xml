@@ -13,6 +13,7 @@
                 <p>You will be prompted with Rave Payment page for payment information.</p>]]></field>
             <field name="rave_public_key">FLWPUBK-XXXXX-XX</field>
             <field name="rave_secret_key">FLWSECK-XXXXX-XX</field>
+            <field name="rave_secret_hash">XXXXXXXXXXX</field>
             <field name="description" type="html">
                     <p>
                         A payment gateway to accept online payments via Flutterwave Rave.

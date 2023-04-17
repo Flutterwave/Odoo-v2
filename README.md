@@ -20,6 +20,7 @@ Available features include:
 7. [Contribution guidelines](#contribution-guidelines)
 8. [License](#license)
 9. [Changelog](#changelog)
+10. [Development] (#development)
 
 <a id="requirements"></a>
 
@@ -61,6 +62,52 @@ Now, let's configure the payment acquirer:
 - Click on the *Save* button.
 - Click on the *Publish* button to make the acquirer available for you in the
   eCommerce shop.
+
+<a id="development"></a>
+
+## Development
+
+To Test to application environment, you may choose to use docker. a suggestion would be to use the offical [odoo docker image](https://hub.docker.com/_/odoo).
+
+There you would find a sample of a `docker-compose.yml` file if you prefer to use `docker-compose`.
+
+To add the module to the odoo container addons simply mount the location of the module to `mnt\extra-addons` like in the sample below.
+
+```docker-composer.yml
+
+version: '3.1'
+services:
+  web:
+    image: odoo:14.0
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+      - ../:/mnt/extra-addons
+  db:
+    image: postgres:13
+    user: root
+    environment:
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=odoo
+      - POSTGRES_DB=postgres
+    restart: always             # run as a service
+    volumes:
+        - ./postgresql:/var/lib/postgresql/data
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8066:8080
+
+volumes:
+  odoo-web-data:
+  odoo-db-data:
+
+
+```
 
 <a id="debugging errors"></a>
 
